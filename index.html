@@ -661,7 +661,7 @@
       <span style="color:var(--text-muted);font-size:.75rem;">👤</span>
     </div>
     <!-- shown when logged out -->
-    <button id="navLoginBtn" onclick="openModal(event)" style="display:none;background:transparent;border:1px solid var(--border);color:var(--cream);padding:7px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--cream)'">Войти</button>
+    <button id="navLoginBtn" onclick="openModal(event)" style="display:block;background:transparent;border:1px solid var(--border);color:var(--cream);padding:7px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--cream)'">Войти</button>
     <div class="site-lang-switcher">
       <button class="site-lang-btn active" onclick="setSiteLang('en',this)">EN</button>
       <button class="site-lang-btn" onclick="setSiteLang('ru',this)">RU</button>
@@ -1141,12 +1141,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = session.user;
     await loadProfile();
     showUserBadge();
-    closeModal();
+    // Закрываем модалку только после успешной загрузки профиля
+    setTimeout(() => closeModal(), 100);
   } else {
     currentUser = null;
     userProfile = null;
     hideUserBadge();
-    // Показываем кнопку Войти для гостей
     document.getElementById('navLoginBtn').style.display = 'block';
   }
 });
@@ -1291,9 +1291,8 @@ async function handleAuth() {
       if (authMode === 'register') {
         msgEl.textContent = '✓ Проверьте email для подтверждения!';
         msgEl.className = 'modal-msg success';
-      } else {
-        closeModal();
       }
+      // При логине модалка закроется автоматически через onAuthStateChange
     }
   } catch(e) {
     msgEl.textContent = 'Ошибка соединения';
