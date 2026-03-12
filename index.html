@@ -1167,13 +1167,14 @@ async function checkMonthlyReset() {
     resetDate.getFullYear() !== now.getFullYear();
 
   if (shouldReset && userProfile.plan !== 'pro') {
-    await sb.from('profiles').update({
-      generations_used: 0,
-      last_reset: now.toISOString()
-    }).eq('id', currentUser.id);
+    await authProxy({
+      action: 'update_profile',
+      userId: currentUser.id,
+      token: authToken,
+      updates: { generations_used: 0, last_reset: now.toISOString() }
+    });
     userProfile.generations_used = 0;
     userProfile.last_reset = now.toISOString();
-    // Сбрасываем device counter тоже
     localStorage.setItem('sw_device_used', '0');
     updateCounter();
   }
@@ -1206,11 +1207,9 @@ async function sendResetEmail() {
   btn.disabled = true;
   btn.textContent = '...';
 
-  const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://shopwriter.ru'
-  });
+  const data = await authProxy({ action: 'reset', email });
 
-  if (error) {
+  if (data.error) {
     msgEl.textContent = 'Ошибка. Проверьте email.';
     msgEl.className = 'modal-msg error';
   } else {
@@ -1353,17 +1352,29 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const FREE_LIMIT = 20;
 let currentUser = null;
 let userProfile = null;
+let authToken = null;
+
+// ─── SERVER PROXY HELPER ──────────────────────────────────────────
+async function authProxy(payload) {
+  const res = await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
 
 // ─── AUTH STATE ────────────────────────────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
   if (session?.user) {
     currentUser = session.user;
+    authToken = session.access_token;
     await loadProfile();
     showUserBadge();
-    // Закрываем модалку только после успешной загрузки профиля
     setTimeout(() => closeModal(), 100);
   } else {
     currentUser = null;
+    authToken = null;
     userProfile = null;
     hideUserBadge();
     document.getElementById('navLoginBtn').style.display = 'block';
@@ -1372,12 +1383,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 async function loadProfile() {
   try {
-    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
-    const query = sb.from('profiles').select('*').eq('id', currentUser.id).single();
-    const { data } = await Promise.race([query, timeout]);
+    const data = await authProxy({
+      action: 'profile',
+      userId: currentUser.id,
+      token: authToken
+    });
     userProfile = data || { generations_used: 0, plan: 'free' };
   } catch(e) {
-    // Если Supabase не отвечает — создаём дефолтный профиль
     userProfile = { generations_used: 0, plan: 'free' };
   }
   await checkMonthlyReset();
@@ -1504,44 +1516,42 @@ async function handleAuth() {
 
   try {
     if (authMode === 'login') {
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) {
+      const data = await authProxy({ action: 'login', email, password });
+      if (data.error || data.error_code) {
         let msg = 'Неверный email или пароль';
-        if (error.message.includes('Email not confirmed')) msg = 'Подтвердите email — проверьте почту';
-        if (error.message.includes('Too many')) msg = 'Слишком много попыток, подождите';
+        if (data.error_description?.includes('Email not confirmed') || data.msg?.includes('not confirmed')) msg = 'Подтвердите email — проверьте почту';
+        if (data.error_description?.includes('Too many')) msg = 'Слишком много попыток, подождите';
         msgEl.textContent = msg;
         msgEl.className = 'modal-msg error';
-      } else {
-        currentUser = data.user;
-        await loadProfile();
-        showUserBadge();
-        closeModal();
-        return; // выходим до btn.disabled=false — модалка уже закрыта
+      } else if (data.access_token) {
+        // Успешный вход через proxy — устанавливаем сессию
+        authToken = data.access_token;
+        const { error: sessionError } = await sb.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token
+        });
+        if (!sessionError) {
+          currentUser = data.user;
+          await loadProfile();
+          showUserBadge();
+          closeModal();
+          return;
+        }
       }
     } else {
-      // Регистрация — сначала проверяем не занят ли email
-      const { data, error } = await sb.auth.signUp({ email, password });
-      if (error) {
+      const data = await authProxy({ action: 'register', email, password });
+      if (data.error || data.error_code) {
         let msg = 'Ошибка регистрации';
-        if (error.message.includes('already registered') || error.message.includes('already been registered')) {
-          msg = '⚠️ Этот email уже зарегистрирован. Войдите!';
-        }
-        if (error.message.includes('invalid')) msg = 'Некорректный email';
+        if (data.error_description?.includes('already') || data.msg?.includes('already')) msg = '⚠️ Этот email уже зарегистрирован. Войдите!';
+        if (data.error_description?.includes('invalid')) msg = 'Некорректный email';
         msgEl.textContent = msg;
         msgEl.className = 'modal-msg error';
-        btn.disabled = false;
-        btn.textContent = 'Зарегистрироваться';
-      } else if (data?.user?.identities?.length === 0) {
-        // Supabase возвращает пустой identities если email уже занят
+      } else if (data.identities?.length === 0) {
         msgEl.innerHTML = '⚠️ Этот email уже зарегистрирован. <a href="#" onclick="switchTab(\'login\',document.getElementById(\'tabLogin\'));return false;" style="color:var(--amber);text-decoration:underline;">Войти →</a>';
         msgEl.className = 'modal-msg error';
-        btn.disabled = false;
-        btn.textContent = 'Зарегистрироваться';
       } else {
         msgEl.textContent = '✓ Проверьте email для подтверждения!';
         msgEl.className = 'modal-msg success';
-        btn.disabled = false;
-        btn.textContent = 'Зарегистрироваться';
       }
     }
   } catch(e) {
@@ -1782,19 +1792,19 @@ Format with sections: 1. TITLE 2. DESCRIPTION 3. BULLET POINTS (✓) 4. SEO KEYW
     localStorage.setItem('sw_device_used', newDeviceUsed);
 
     if (currentUser && userProfile) {
-      // Обновляем счётчик аккаунта
       const newCount = (userProfile.generations_used || 0) + 1;
-      await sb.from('profiles').update({
-        generations_used: newCount,
-        device_id: DEVICE_ID
-      }).eq('id', currentUser.id);
+      await authProxy({
+        action: 'update_profile',
+        userId: currentUser.id,
+        token: authToken,
+        updates: { generations_used: newCount, device_id: DEVICE_ID }
+      });
       userProfile.generations_used = newCount;
 
-      // Обновляем счётчик устройства в Supabase (upsert)
-      await sb.from('device_limits').upsert({
-        device_id: DEVICE_ID,
-        generations_used: newDeviceUsed
-      }, { onConflict: 'device_id' });
+      await authProxy({
+        action: 'upsert_device',
+        deviceData: { device_id: DEVICE_ID, generations_used: newDeviceUsed }
+      });
 
       updateCounter();
     } else {
