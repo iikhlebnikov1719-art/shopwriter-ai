@@ -456,8 +456,10 @@
     display:flex; align-items:center; gap:10px;
     background:var(--surface3); border:1px solid var(--border);
     border-radius:8px; padding:6px 14px;
-    font-size:.85rem;
+    font-size:.85rem; cursor:pointer;
+    transition:border-color .2s;
   }
+  .user-badge:hover { border-color:var(--amber); }
   .user-badge .u-email { color:var(--cream); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .user-badge .u-plan {
     background:rgba(232,160,32,0.15); color:var(--amber);
@@ -468,6 +470,92 @@
     cursor:pointer; font-size:.8rem; transition:color .2s;
   }
   .user-badge .u-logout:hover { color:#ff6b6b; }
+
+  /* DASHBOARD MODAL */
+  .dashboard-overlay {
+    position:fixed; inset:0; z-index:500;
+    background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .25s;
+  }
+  .dashboard-overlay.open { opacity:1; pointer-events:all; }
+  .dashboard-modal {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:20px; padding:0; width:100%; max-width:560px;
+    position:relative; transform:translateY(20px); transition:transform .25s;
+    overflow:hidden;
+  }
+  .dashboard-overlay.open .dashboard-modal { transform:translateY(0); }
+  .dash-header {
+    background:linear-gradient(135deg, var(--amber-dim), rgba(232,160,32,0.15));
+    padding:28px 32px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:16px;
+  }
+  .dash-avatar {
+    width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg, var(--amber), #ff8c00);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; color:var(--ink);
+    flex-shrink:0;
+  }
+  .dash-user-info { flex:1; }
+  .dash-email { font-size:.95rem; color:var(--cream); font-weight:500; margin-bottom:4px; }
+  .dash-plan-badge {
+    display:inline-block;
+    background:var(--amber); color:var(--ink);
+    border-radius:6px; padding:3px 12px;
+    font-size:.75rem; font-weight:700; font-family:'Syne',sans-serif;
+    letter-spacing:.05em;
+  }
+  .dash-plan-badge.free { background:rgba(232,160,32,0.2); color:var(--amber); }
+  .dash-close {
+    background:none; border:none; color:var(--text-muted);
+    font-size:1.3rem; cursor:pointer; transition:color .2s; align-self:flex-start;
+  }
+  .dash-close:hover { color:var(--cream); }
+  .dash-body { padding:28px 32px; }
+  .dash-stats-row {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px;
+  }
+  .dash-stat {
+    background:var(--surface3); border:1px solid var(--border);
+    border-radius:12px; padding:16px; text-align:center;
+  }
+  .dash-stat-num {
+    font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem;
+    color:var(--amber); margin-bottom:4px;
+  }
+  .dash-stat-label { font-size:.75rem; color:var(--text-muted); }
+  .dash-section-title {
+    font-size:.75rem; color:var(--text-muted); letter-spacing:.1em;
+    text-transform:uppercase; margin-bottom:12px;
+  }
+  .dash-progress-wrap {
+    background:var(--surface3); border:1px solid var(--border);
+    border-radius:12px; padding:16px; margin-bottom:20px;
+  }
+  .dash-progress-top {
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;
+  }
+  .dash-progress-text { font-size:.88rem; }
+  .dash-progress-pct { font-size:.82rem; color:var(--text-muted); }
+  .dash-bar-wrap { height:8px; background:var(--surface); border-radius:99px; overflow:hidden; }
+  .dash-bar { height:100%; background:linear-gradient(90deg,var(--amber),var(--amber-light)); border-radius:99px; transition:width .6s; }
+  .dash-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .dash-btn {
+    flex:1; padding:12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface3); color:var(--cream);
+    font-family:'DM Sans',sans-serif; font-size:.88rem; cursor:pointer;
+    transition:all .2s; text-align:center; min-width:120px;
+  }
+  .dash-btn:hover { border-color:var(--amber); color:var(--amber); }
+  .dash-btn.danger { color:#ff6b6b; }
+  .dash-btn.danger:hover { border-color:#ff6b6b; background:rgba(255,107,107,0.05); }
+  .dash-btn.upgrade {
+    background:var(--amber); color:var(--ink); border:none; font-weight:600;
+  }
+  .dash-btn.upgrade:hover { background:var(--amber-light); color:var(--ink); }
 
   /* COUNTER BAR */
   .gen-counter {
@@ -482,6 +570,76 @@
   .gen-bar { height:100%; background:var(--amber); border-radius:99px; transition:width .4s; }
   .gen-label { white-space:nowrap; font-size:.82rem; }
   .gen-label strong { color:var(--amber); }
+
+  /* FORMATTED OUTPUT */
+  .output-formatted { line-height:1.8; }
+  .output-formatted .out-section { margin-bottom:20px; }
+  .output-formatted .out-section-title {
+    font-family:'Syne',sans-serif; font-weight:700; font-size:.78rem;
+    letter-spacing:.12em; color:var(--amber); text-transform:uppercase;
+    margin-bottom:8px; padding-bottom:6px;
+    border-bottom:1px solid rgba(232,160,32,0.15);
+  }
+  .output-formatted .out-section-body { font-size:.95rem; color:var(--cream); }
+  .output-formatted .bullet { display:flex; gap:8px; margin-bottom:4px; }
+  .output-formatted .bullet::before { content:'✓'; color:var(--amber); flex-shrink:0; }
+  .output-formatted .keywords { display:flex; flex-wrap:wrap; gap:6px; }
+  .output-formatted .kw-tag {
+    background:rgba(232,160,32,0.1); border:1px solid rgba(232,160,32,0.2);
+    border-radius:99px; padding:3px 12px; font-size:.78rem; color:var(--amber);
+  }
+
+  /* SHARE BUTTONS */
+  .share-row {
+    display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;
+  }
+  .share-btn {
+    display:flex; align-items:center; gap:6px;
+    padding:8px 16px; border-radius:8px; border:none;
+    font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:500;
+    cursor:pointer; transition:all .2s;
+  }
+  .share-tg { background:#229ED9; color:#fff; }
+  .share-tg:hover { background:#1a8bbf; }
+  .share-vk { background:#0077FF; color:#fff; }
+  .share-vk:hover { background:#005fcc; }
+  .share-copy2 { background:var(--surface3); color:var(--cream); border:1px solid var(--border); }
+  .share-copy2:hover { border-color:var(--amber); }
+
+  /* REVIEWS SECTION */
+  .reviews-section {
+    padding: 100px 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 48px;
+  }
+  .review-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color .2s;
+  }
+  .review-card:hover { border-color: rgba(232,160,32,0.4); }
+  .review-stars { color: var(--amber); font-size:1rem; margin-bottom:14px; letter-spacing:2px; }
+  .review-text { font-size:.95rem; line-height:1.7; color:var(--cream); margin-bottom:18px; font-style:italic; opacity:.9; }
+  .review-author { display:flex; align-items:center; gap:12px; }
+  .review-avatar {
+    width:40px; height:40px; border-radius:50%;
+    background:linear-gradient(135deg, var(--amber), var(--amber-dim));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Syne',sans-serif; font-weight:700; font-size:.9rem; color:var(--ink);
+  }
+  .review-name { font-weight:500; font-size:.9rem; }
+  .review-meta { font-size:.78rem; color:var(--text-muted); margin-top:2px; }
+
+  /* ANIMATED STATS */
+  .stat-num { font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; color:var(--amber); }
 </style>
 </head>
 <body>
@@ -497,10 +655,10 @@
   </ul>
   <div style="display:flex;align-items:center;gap:12px;">
     <!-- shown when logged in -->
-    <div class="user-badge" id="userBadge" style="display:none;">
+    <div class="user-badge" id="userBadge" style="display:none;" onclick="openDashboard()">
       <span class="u-plan" id="userPlan">FREE</span>
       <span class="u-email" id="userEmail"></span>
-      <button class="u-logout" onclick="logout()">Выйти</button>
+      <span style="color:var(--text-muted);font-size:.75rem;">👤</span>
     </div>
     <div class="site-lang-switcher">
       <button class="site-lang-btn active" onclick="setSiteLang('en',this)">EN</button>
@@ -532,6 +690,67 @@
   </div>
 </div>
 
+<!-- DASHBOARD MODAL -->
+<div class="dashboard-overlay" id="dashboardModal">
+  <div class="dashboard-modal">
+    <div class="dash-header">
+      <div class="dash-avatar" id="dashAvatar">?</div>
+      <div class="dash-user-info">
+        <div class="dash-email" id="dashEmail">—</div>
+        <span class="dash-plan-badge free" id="dashPlanBadge">FREE</span>
+      </div>
+      <button class="dash-close" onclick="closeDashboard()">✕</button>
+    </div>
+    <div class="dash-body">
+
+      <!-- STATS -->
+      <div class="dash-stats-row">
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="dashGenUsed">0</div>
+          <div class="dash-stat-label">Генераций<br>использовано</div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="dashGenLeft">20</div>
+          <div class="dash-stat-label">Осталось<br>в этом месяце</div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-num" id="dashDaysSince">0</div>
+          <div class="dash-stat-label">Дней<br>с нами</div>
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="dash-section-title">Использование лимита</div>
+      <div class="dash-progress-wrap">
+        <div class="dash-progress-top">
+          <span class="dash-progress-text">
+            <strong id="dashUsedNum">0</strong> из <strong id="dashLimitNum">20</strong> генераций
+          </span>
+          <span class="dash-progress-pct" id="dashPct">0%</span>
+        </div>
+        <div class="dash-bar-wrap">
+          <div class="dash-bar" id="dashBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="dash-section-title">Действия</div>
+      <div class="dash-actions">
+        <button class="dash-btn upgrade" id="dashUpgradeBtn" onclick="closeDashboard();document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">
+          ⚡ Перейти на Pro
+        </button>
+        <button class="dash-btn" onclick="closeDashboard();document.getElementById('tool').scrollIntoView({behavior:'smooth'})">
+          ✦ Генерировать
+        </button>
+        <button class="dash-btn danger" onclick="closeDashboard();logout()">
+          Выйти
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- HERO -->
 <section class="hero">
   <div class="hero-glow"></div>
@@ -543,9 +762,9 @@
     <button class="btn-secondary" data-i18n="hero.cta2">Watch demo</button>
   </div>
   <div class="hero-stats">
-    <div class="stat"><div class="stat-num">10k+</div><div class="stat-label" data-i18n="hero.stat1">Descriptions generated</div></div>
-    <div class="stat"><div class="stat-num">3x</div><div class="stat-label" data-i18n="hero.stat2">Faster than writing</div></div>
-    <div class="stat"><div class="stat-num">+34%</div><div class="stat-label" data-i18n="hero.stat3">Avg. conversion lift</div></div>
+    <div class="stat"><div class="stat-num" id="stat1">0</div><div class="stat-label" data-i18n="hero.stat1">Descriptions generated</div></div>
+    <div class="stat"><div class="stat-num" id="stat2">0x</div><div class="stat-label" data-i18n="hero.stat2">Faster than writing</div></div>
+    <div class="stat"><div class="stat-num" id="stat3">+0%</div><div class="stat-label" data-i18n="hero.stat3">Avg. conversion lift</div></div>
   </div>
 </section>
 
@@ -637,7 +856,12 @@
           <button class="copy-btn" onclick="copyOutput()" data-i18n="tool.copy">Copy all</button>
         </div>
         <div class="output-tabs" id="outputTabs"></div>
-        <div class="output-content" id="outputContent"></div>
+        <div class="output-content output-formatted" id="outputContent"></div>
+        <div class="share-row" id="shareRow" style="display:none;">
+          <button class="share-btn share-tg" onclick="shareToTelegram()">✈️ Поделиться в Telegram</button>
+          <button class="share-btn share-vk" onclick="shareToVK()">💬 Поделиться в VK</button>
+          <button class="share-btn share-copy2" onclick="copyOutput()">📋 Скопировать</button>
+        </div>
       </div>
 
     </div>
@@ -731,6 +955,49 @@
   </div>
 </section>
 
+<!-- REVIEWS -->
+<section id="reviews">
+  <div class="reviews-section">
+    <div class="section-label reveal" style="text-align:center">Отзывы</div>
+    <div class="section-title reveal" style="text-align:center;margin:0 auto 0;max-width:500px">Продавцы уже используют<br><em>ShopWriter AI</em></div>
+    <div class="reviews-grid reveal">
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"Раньше тратил 2 часа на описания для новой коллекции. Теперь 15 минут. Продажи на Wildberries выросли — алгоритм явно лучше ранжирует мои товары."</div>
+        <div class="review-author">
+          <div class="review-avatar">АК</div>
+          <div>
+            <div class="review-name">Алексей К.</div>
+            <div class="review-meta">Продавец одежды · Wildberries · 340+ товаров</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"Запустила магазин косметики на Ozon. ShopWriter помог с описаниями на русском и английском одновременно. Конверсия карточек выросла заметно."</div>
+        <div class="review-author">
+          <div class="review-avatar">МС</div>
+          <div>
+            <div class="review-name">Мария С.</div>
+            <div class="review-meta">Бьюти-предприниматель · Ozon + Shopify</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"Управляю 3 магазинами. Без ShopWriter не представляю как обновлял бы сотни описаний вручную. Инструмент окупился за первую же неделю."</div>
+        <div class="review-author">
+          <div class="review-avatar">ДВ</div>
+          <div>
+            <div class="review-name">Дмитрий В.</div>
+            <div class="review-meta">Мультиканальный продавец · WB + Ozon + AliExpress</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="logo">Shop<span>Writer</span> AI</div>
@@ -743,7 +1010,97 @@
 </footer>
 
 <script>
-// ─── SUPABASE INIT ─────────────────────────────────────────────────
+// ─── ANIMATED COUNTERS ────────────────────────────────────────────
+function animateCounter(el, target, suffix='', prefix='') {
+  let start = 0;
+  const duration = 2000;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) { start = target; clearInterval(timer); }
+    el.textContent = prefix + (target >= 1000 ? Math.floor(start/1000)+'k+' : Math.floor(start)) + suffix;
+  }, 16);
+}
+
+const statsObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      animateCounter(document.getElementById('stat1'), 12400);
+      animateCounter(document.getElementById('stat2'), 3, 'x');
+      animateCounter(document.getElementById('stat3'), 34, '%', '+');
+      statsObserver.disconnect();
+    }
+  });
+}, { threshold: 0.5 });
+const heroStats = document.querySelector('.hero-stats');
+if (heroStats) statsObserver.observe(heroStats);
+
+// ─── SHARE FUNCTIONS ──────────────────────────────────────────────
+function getShareText() {
+  const name = document.getElementById('productName')?.value || 'товар';
+  return `Сгенерировал описание для "${name}" с помощью ShopWriter AI 🚀\n\nПопробуй бесплатно: https://shopwriter.ru`;
+}
+
+function shareToTelegram() {
+  const text = encodeURIComponent(getShareText());
+  window.open(`https://t.me/share/url?url=https://shopwriter.ru&text=${text}`, '_blank');
+}
+
+function shareToVK() {
+  const text = encodeURIComponent(getShareText());
+  window.open(`https://vk.com/share.php?url=https://shopwriter.ru&title=${text}`, '_blank');
+}
+
+// ─── FORMAT OUTPUT ────────────────────────────────────────────────
+function formatOutput(text) {
+  // Remove markdown symbols
+  text = text.replace(/#{1,4}\s*/g, '').replace(/\*\*/g, '').replace(/\*/g, '');
+
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  let html = '';
+  let currentSection = '';
+  let sectionContent = [];
+
+  const flushSection = () => {
+    if (!currentSection && !sectionContent.length) return;
+    html += `<div class="out-section">`;
+    if (currentSection) html += `<div class="out-section-title">${currentSection}</div>`;
+    html += `<div class="out-section-body">`;
+
+    const isBullets = sectionContent.some(l => l.startsWith('✓') || l.startsWith('•') || l.startsWith('-'));
+    const isKeywords = currentSection.toLowerCase().includes('keyword') || currentSection.toLowerCase().includes('ключ');
+
+    if (isKeywords) {
+      const kws = sectionContent.join(', ').split(/[,،]/).map(k => k.trim()).filter(k => k);
+      html += `<div class="keywords">` + kws.map(k => `<span class="kw-tag">${k}</span>`).join('') + `</div>`;
+    } else if (isBullets) {
+      sectionContent.forEach(l => {
+        const clean = l.replace(/^[✓•\-]\s*/, '');
+        html += `<div class="bullet">${clean}</div>`;
+      });
+    } else {
+      html += sectionContent.map(l => `<p style="margin-bottom:6px">${l}</p>`).join('');
+    }
+
+    html += `</div></div>`;
+    sectionContent = [];
+    currentSection = '';
+  };
+
+  const sectionMarkers = ['1.', '2.', '3.', '4.', 'TITLE', 'DESCRIPTION', 'BULLET', 'SEO', 'ЗАГОЛОВОК', 'ОПИСАНИЕ', 'КЛЮЧЕВЫЕ', 'БУЛЛЕТ'];
+
+  lines.forEach(line => {
+    const isHeader = sectionMarkers.some(m => line.toUpperCase().startsWith(m)) && line.length < 60;
+    if (isHeader) {
+      flushSection();
+      currentSection = line.replace(/^\d+\.\s*/, '');
+    } else {
+      sectionContent.push(line);
+    }
+  });
+  flushSection();
+  return html || `<p>${text}</p>`;
+}
 const SUPABASE_URL = 'https://bqlednvydstcyggwdssa.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxbGVkbnZ5ZHN0Y3lnZ3dkc3NhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMzY4NDAsImV4cCI6MjA4ODgxMjg0MH0.LEHkwtvgY7rVH7aXc_SFfNvqrayQOE-bw_-5griXVFA';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -783,6 +1140,51 @@ function updateCounter() {
   document.getElementById('genPlanLabel').textContent = userProfile.plan === 'pro' ? 'Pro план' : 'Free план';
   document.getElementById('genBar').style.background = pct >= 90 ? '#ff6b6b' : 'var(--amber)';
 }
+
+// ─── DASHBOARD ────────────────────────────────────────────────────
+function openDashboard() {
+  if (!currentUser || !userProfile) return;
+  const used = userProfile.generations_used || 0;
+  const limit = userProfile.plan === 'pro' ? 500 : FREE_LIMIT;
+  const left = Math.max(0, limit - used);
+  const pct = Math.min(Math.round((used/limit)*100), 100);
+
+  // Avatar initials
+  const initials = currentUser.email.slice(0,2).toUpperCase();
+  document.getElementById('dashAvatar').textContent = initials;
+  document.getElementById('dashEmail').textContent = currentUser.email;
+
+  const plan = userProfile.plan || 'free';
+  const badge = document.getElementById('dashPlanBadge');
+  badge.textContent = plan.toUpperCase();
+  badge.className = 'dash-plan-badge' + (plan === 'free' ? ' free' : '');
+
+  document.getElementById('dashGenUsed').textContent = used;
+  document.getElementById('dashGenLeft').textContent = left;
+  document.getElementById('dashUsedNum').textContent = used;
+  document.getElementById('dashLimitNum').textContent = limit;
+  document.getElementById('dashPct').textContent = pct + '%';
+  document.getElementById('dashBar').style.width = pct + '%';
+  document.getElementById('dashBar').style.background = pct >= 90 ? '#ff6b6b' : 'linear-gradient(90deg,var(--amber),var(--amber-light))';
+
+  // Days since registration
+  const created = new Date(currentUser.created_at || Date.now());
+  const days = Math.floor((Date.now() - created) / 86400000);
+  document.getElementById('dashDaysSince').textContent = days;
+
+  // Hide upgrade btn for pro
+  document.getElementById('dashUpgradeBtn').style.display = plan === 'pro' ? 'none' : '';
+
+  document.getElementById('dashboardModal').classList.add('open');
+}
+
+function closeDashboard() {
+  document.getElementById('dashboardModal').classList.remove('open');
+}
+
+document.getElementById('dashboardModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDashboard();
+});
 
 function showUserBadge() {
   document.getElementById('userBadge').style.display = 'flex';
@@ -992,6 +1394,18 @@ async function generate() {
   const name = document.getElementById('productName').value.trim();
   if (!name) { document.getElementById('productName').focus(); return; }
 
+  // ── GUEST LIMIT: 1 generation without account ──
+  if (!currentUser) {
+    const guestUsed = parseInt(localStorage.getItem('sw_guest_used') || '0');
+    if (guestUsed >= 1) {
+      // Show register prompt
+      document.getElementById('authModal').classList.add('open');
+      document.getElementById('modalTitle').textContent = '🎉 Понравилось?';
+      document.getElementById('modalSub').textContent = 'Зарегистрируйтесь бесплатно — получите 20 генераций в месяц!';
+      return;
+    }
+  }
+
   // Check limit for logged-in users
   if (currentUser && userProfile) {
     const limit = userProfile.plan === 'pro' ? 500 : FREE_LIMIT;
@@ -1056,12 +1470,33 @@ Format with sections: 1. TITLE 2. DESCRIPTION 3. BULLET POINTS (✓) 4. SEO KEYW
 
     renderOutputTabs();
 
-    // Increment counter in Supabase
+    // Increment counter
     if (currentUser && userProfile) {
       const newCount = (userProfile.generations_used || 0) + 1;
       await sb.from('profiles').update({ generations_used: newCount }).eq('id', currentUser.id);
       userProfile.generations_used = newCount;
       updateCounter();
+    } else {
+      // Guest — increment local counter
+      const guestUsed = parseInt(localStorage.getItem('sw_guest_used') || '0');
+      localStorage.setItem('sw_guest_used', guestUsed + 1);
+      // Show signup nudge under result
+      setTimeout(() => {
+        const shareRow = document.getElementById('shareRow');
+        if (shareRow && !currentUser) {
+          const nudge = document.createElement('div');
+          nudge.id = 'guestNudge';
+          nudge.style.cssText = 'margin-top:16px;padding:16px;background:linear-gradient(135deg,rgba(232,160,32,0.12),rgba(232,160,32,0.05));border:1px solid rgba(232,160,32,0.3);border-radius:12px;text-align:center;';
+          nudge.innerHTML = `
+            <div style="font-family:Syne,sans-serif;font-weight:700;margin-bottom:6px;">Это была ваша бесплатная генерация ✨</div>
+            <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:12px;">Зарегистрируйтесь бесплатно и получите <strong style="color:var(--amber)">20 генераций в месяц</strong></div>
+            <button onclick="openModal(event)" style="background:var(--amber);color:var(--ink);border:none;padding:10px 28px;border-radius:8px;font-family:Syne,sans-serif;font-weight:700;cursor:pointer;font-size:.95rem;">Зарегистрироваться бесплатно →</button>
+          `;
+          if (!document.getElementById('guestNudge')) {
+            shareRow.parentNode.insertBefore(nudge, shareRow.nextSibling);
+          }
+        }
+      }, 300);
     }
 
   } catch(e) {
@@ -1076,14 +1511,17 @@ Format with sections: 1. TITLE 2. DESCRIPTION 3. BULLET POINTS (✓) 4. SEO KEYW
 function renderOutputTabs() {
   const tabsEl = document.getElementById('outputTabs');
   const contentEl = document.getElementById('outputContent');
+  const shareRow = document.getElementById('shareRow');
+  if (shareRow) shareRow.style.display = 'flex';
+
   if (currentLang === 'both') {
     tabsEl.innerHTML = `<button class="out-tab active" onclick="showTab('ru',this)">🇷🇺 Русский</button><button class="out-tab" onclick="showTab('en',this)">🇺🇸 English</button>`;
     activeTab = 'ru';
-    contentEl.textContent = outputs['ru'] || outputs['en'] || '';
+    contentEl.innerHTML = formatOutput(outputs['ru'] || outputs['en'] || '');
   } else {
     tabsEl.innerHTML = '';
     activeTab = currentLang;
-    contentEl.textContent = outputs[currentLang] || '';
+    contentEl.innerHTML = formatOutput(outputs[currentLang] || '');
   }
 }
 
@@ -1091,14 +1529,16 @@ function showTab(lang, btn) {
   activeTab = lang;
   document.querySelectorAll('.out-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('outputContent').textContent = outputs[lang] || '';
+  document.getElementById('outputContent').innerHTML = formatOutput(outputs[lang] || '');
 }
 
 function copyOutput() {
-  navigator.clipboard.writeText(document.getElementById('outputContent').textContent).then(() => {
+  const text = outputs[activeTab] || Object.values(outputs)[0] || '';
+  navigator.clipboard.writeText(text).then(() => {
     const btn = document.querySelector('.copy-btn');
+    const origText = btn.textContent;
     btn.textContent = i18n[siteLang]['tool.copied'];
-    setTimeout(() => btn.textContent = i18n[siteLang]['tool.copy'], 2000);
+    setTimeout(() => btn.textContent = origText, 2000);
   });
 }
 
