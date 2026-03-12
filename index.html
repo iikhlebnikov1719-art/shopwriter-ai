@@ -1371,8 +1371,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
 });
 
 async function loadProfile() {
-  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-  userProfile = data;
+  try {
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+    const query = sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    const { data } = await Promise.race([query, timeout]);
+    userProfile = data || { generations_used: 0, plan: 'free' };
+  } catch(e) {
+    // Если Supabase не отвечает — создаём дефолтный профиль
+    userProfile = { generations_used: 0, plan: 'free' };
+  }
   await checkMonthlyReset();
   updateCounter();
   renderHistory();
@@ -1504,14 +1511,12 @@ async function handleAuth() {
         if (error.message.includes('Too many')) msg = 'Слишком много попыток, подождите';
         msgEl.textContent = msg;
         msgEl.className = 'modal-msg error';
-        btn.disabled = false;
-        btn.textContent = 'Войти';
       } else {
-        // Успешный вход — закрываем сами, не ждём onAuthStateChange
         currentUser = data.user;
         await loadProfile();
         showUserBadge();
         closeModal();
+        return; // выходим до btn.disabled=false — модалка уже закрыта
       }
     } else {
       // Регистрация — сначала проверяем не занят ли email
@@ -1542,6 +1547,7 @@ async function handleAuth() {
   } catch(e) {
     msgEl.textContent = 'Ошибка соединения. Попробуйте ещё раз.';
     msgEl.className = 'modal-msg error';
+  } finally {
     btn.disabled = false;
     btn.textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
   }
