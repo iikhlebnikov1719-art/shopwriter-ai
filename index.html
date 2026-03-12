@@ -1274,33 +1274,50 @@ async function handleAuth() {
   msgEl.textContent = '';
 
   try {
-    let result;
     if (authMode === 'login') {
-      result = await sb.auth.signInWithPassword({ email, password });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) {
+        let msg = 'Неверный email или пароль';
+        if (error.message.includes('Email not confirmed')) msg = 'Подтвердите email — проверьте почту';
+        if (error.message.includes('Too many')) msg = 'Слишком много попыток, подождите';
+        msgEl.textContent = msg;
+        msgEl.className = 'modal-msg error';
+        btn.disabled = false;
+        btn.textContent = 'Войти';
+      }
+      // Если успех — onAuthStateChange закроет модалку
     } else {
-      result = await sb.auth.signUp({ email, password });
-    }
-
-    if (result.error) {
-      let msg = result.error.message;
-      if (msg.includes('Invalid login')) msg = 'Неверный email или пароль';
-      if (msg.includes('already registered')) msg = 'Email уже зарегистрирован';
-      msgEl.textContent = msg;
-      msgEl.className = 'modal-msg error';
-    } else {
-      if (authMode === 'register') {
+      // Регистрация — сначала проверяем не занят ли email
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) {
+        let msg = 'Ошибка регистрации';
+        if (error.message.includes('already registered') || error.message.includes('already been registered')) {
+          msg = '⚠️ Этот email уже зарегистрирован. Войдите!';
+        }
+        if (error.message.includes('invalid')) msg = 'Некорректный email';
+        msgEl.textContent = msg;
+        msgEl.className = 'modal-msg error';
+        btn.disabled = false;
+        btn.textContent = 'Зарегистрироваться';
+      } else if (data?.user?.identities?.length === 0) {
+        // Supabase возвращает пустой identities если email уже занят
+        msgEl.innerHTML = '⚠️ Этот email уже зарегистрирован. <a href="#" onclick="switchTab(\'login\',document.getElementById(\'tabLogin\'));return false;" style="color:var(--amber);text-decoration:underline;">Войти →</a>';
+        msgEl.className = 'modal-msg error';
+        btn.disabled = false;
+        btn.textContent = 'Зарегистрироваться';
+      } else {
         msgEl.textContent = '✓ Проверьте email для подтверждения!';
         msgEl.className = 'modal-msg success';
+        btn.disabled = false;
+        btn.textContent = 'Зарегистрироваться';
       }
-      // При логине модалка закроется автоматически через onAuthStateChange
     }
   } catch(e) {
-    msgEl.textContent = 'Ошибка соединения';
+    msgEl.textContent = 'Ошибка соединения. Попробуйте ещё раз.';
     msgEl.className = 'modal-msg error';
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
   }
-
-  btn.disabled = false;
-  btn.textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
 }
 
 // Enter key in modal
