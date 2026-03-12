@@ -1571,7 +1571,6 @@ async function handleAuth() {
 
 // Init on load
 renderHistory();
-setSiteLang('ru', null);
 ['authEmail','authPassword'].forEach(id => {
   document.getElementById(id).addEventListener('keydown', e => { if(e.key==='Enter') handleAuth(); });
 });
@@ -1882,6 +1881,9 @@ const observer = new IntersectionObserver(entries => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in-view'); });
 }, { threshold:0.1 });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Язык по умолчанию — русский
+setSiteLang('ru', null);
 </script>
 </body>
 </html>
