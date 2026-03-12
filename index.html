@@ -677,50 +677,81 @@
 
   /* MOBILE */
   @media (max-width: 768px) {
-    nav { padding:14px 20px; }
-    nav ul#navLinks { display:none; }
+    nav { padding:14px 20px; position:relative; }
+    nav ul#navLinks {
+      display:none; flex-direction:column; gap:0;
+      position:absolute; top:100%; left:0; right:0;
+      background:var(--surface2); border-bottom:1px solid var(--border);
+      padding:12px 0; z-index:100;
+    }
+    nav ul#navLinks.mobile-open { display:flex; }
+    nav ul#navLinks li { padding:0; }
+    nav ul#navLinks li a { display:block; padding:12px 20px; font-size:1rem; }
+    #navAuthBtn { display:none !important; }
+
+    /* Бургер */
+    #burgerBtn { display:flex !important; }
+
     .logo { font-size:1.1rem; }
-    .hero { padding:100px 24px 60px; }
-    .hero h1 { font-size:clamp(2rem, 8vw, 3.5rem); }
-    .hero-stats { flex-direction:column; gap:16px; align-items:flex-start; }
-    .hero-actions { flex-direction:column; gap:10px; }
+    .hero { padding:90px 20px 50px; }
+    .hero h1 { font-size:clamp(1.8rem, 8vw, 3rem); }
+    .hero-stats { flex-direction:column; gap:16px; align-items:center; }
+    .stat { min-width:120px; }
+    .hero-actions { flex-direction:column; gap:10px; width:100%; }
     .btn-primary, .btn-secondary { width:100%; text-align:center; }
-    .tool-section { padding:60px 20px; }
+    .tool-section { padding:50px 16px; }
     .tool-card { padding:0; }
-    .tool-body { padding:20px; gap:20px; }
-    .form-grid { grid-template-columns:1fr; }
+    .tool-body { padding:16px; gap:16px; flex-direction:column; }
+    .form-grid { grid-template-columns:1fr; gap:12px; }
     .form-group.full { grid-column:1; }
-    .features-section { padding:60px 20px; }
-    .features-grid { grid-template-columns:1fr; gap:14px; }
-    .pricing-section { padding:60px 20px; }
-    .pricing-grid { grid-template-columns:1fr; gap:16px; }
-    .reviews-section { padding:60px 20px; }
-    .reviews-grid { grid-template-columns:1fr; }
-    .modal { padding:28px 20px; margin:16px; max-width:calc(100vw - 32px); }
-    .dashboard-modal { margin:16px; max-width:calc(100vw - 32px); }
-    .dash-stats-row { grid-template-columns:repeat(3,1fr); gap:8px; }
-    .dash-stat-num { font-size:1.2rem; }
-    .dash-stat-label { font-size:.65rem; }
-    .dash-header { padding:20px; }
-    .dash-body { padding:20px; }
-    footer { flex-direction:column; gap:12px; text-align:center; padding:30px 20px; }
-    .share-row { flex-direction:column; }
+    .features-section { padding:50px 16px; }
+    .features-grid { grid-template-columns:1fr; gap:12px; }
+    .pricing-section { padding:50px 16px; }
+    .pricing-grid { grid-template-columns:1fr; gap:14px; }
+    .reviews-section { padding:50px 16px; }
+    .reviews-grid { grid-template-columns:1fr; gap:14px; }
+    .modal { padding:24px 16px; margin:12px; width:calc(100vw - 24px); max-width:100%; }
+    .dashboard-modal { margin:12px; width:calc(100vw - 24px); max-width:100%; }
+    .dash-stats-row { grid-template-columns:repeat(3,1fr); gap:6px; }
+    .dash-stat-num { font-size:1.1rem; }
+    .dash-stat-label { font-size:.6rem; }
+    .dash-header { padding:16px; }
+    .dash-body { padding:16px; }
+    footer { flex-direction:column; gap:10px; text-align:center; padding:24px 16px; }
+    .share-row { flex-direction:column; gap:8px; }
     .share-btn { width:100%; justify-content:center; }
-    #navLoginBtn { padding:6px 10px; font-size:.78rem; }
-    .user-badge { padding:5px 10px; }
-    .user-badge .u-email { max-width:80px; }
-    .platforms { gap:6px; }
+    #navLoginBtn { padding:6px 12px; font-size:.8rem; }
+    .user-badge { padding:5px 8px; }
+    .user-badge .u-email { max-width:70px; font-size:.72rem; }
+    .platforms { gap:6px; flex-wrap:wrap; }
     .platform-chip { padding:6px 10px; font-size:.78rem; }
-    .lang-toggle { flex-wrap:wrap; }
-    .hero-badge { font-size:.75rem; }
+    .lang-toggle { flex-wrap:wrap; gap:6px; }
+    .hero-badge { font-size:.72rem; padding:5px 12px; }
+    .section-title { font-size:clamp(1.6rem, 6vw, 2.5rem); }
+    .gen-counter { flex-direction:column; align-items:flex-start; gap:8px; }
+    .history-item-name { max-width:160px; }
+    .output-tabs { flex-wrap:wrap; }
   }
 
   @media (max-width: 480px) {
-    .hero h1 { font-size:1.9rem; }
+    .hero h1 { font-size:1.7rem; }
     .dash-stats-row { grid-template-columns:1fr 1fr; }
     .dash-actions { flex-direction:column; }
-    .dash-btn { min-width:unset; }
+    .dash-btn { min-width:unset; width:100%; }
     .site-lang-switcher { display:none; }
+    nav > div { gap:8px; }
+  }
+
+  /* Бургер кнопка */
+  #burgerBtn {
+    display:none;
+    flex-direction:column; justify-content:center; gap:5px;
+    background:none; border:none; cursor:pointer; padding:4px;
+  }
+  #burgerBtn span {
+    display:block; width:22px; height:2px;
+    background:var(--cream); border-radius:2px;
+    transition:all .25s;
   }
 </style>
 </head>
@@ -736,18 +767,19 @@
     <li id="navAuthBtn"><a href="#" class="nav-cta" data-i18n="nav.cta" onclick="openModal(event)">Start Free</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:12px;">
-    <!-- shown when logged in -->
     <div class="user-badge" id="userBadge" style="display:none;" onclick="openDashboard()">
       <span class="u-plan" id="userPlan">FREE</span>
       <span class="u-email" id="userEmail"></span>
       <span style="color:var(--text-muted);font-size:.75rem;">👤</span>
     </div>
-    <!-- shown when logged out -->
     <button id="navLoginBtn" onclick="openModal(event)" style="display:block;background:transparent;border:1px solid var(--border);color:var(--cream);padding:7px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--cream)'">Войти</button>
     <div class="site-lang-switcher">
       <button class="site-lang-btn" onclick="setSiteLang('en',this)">EN</button>
       <button class="site-lang-btn active" onclick="setSiteLang('ru',this)">RU</button>
     </div>
+    <button id="burgerBtn" onclick="toggleMobileMenu()" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
 
@@ -1111,6 +1143,34 @@
 </footer>
 
 <script>
+function toggleMobileMenu() {
+  const menu = document.getElementById('navLinks');
+  const burger = document.getElementById('burgerBtn');
+  menu.classList.toggle('mobile-open');
+  // Анимация бургера в крестик
+  const spans = burger.querySelectorAll('span');
+  if (menu.classList.contains('mobile-open')) {
+    spans[0].style.transform = 'translateY(7px) rotate(45deg)';
+    spans[1].style.opacity = '0';
+    spans[2].style.transform = 'translateY(-7px) rotate(-45deg)';
+  } else {
+    spans[0].style.transform = '';
+    spans[1].style.opacity = '';
+    spans[2].style.transform = '';
+  }
+}
+
+// Закрывать меню при клике на пункт
+document.querySelectorAll('#navLinks a').forEach(a => {
+  a.addEventListener('click', () => {
+    document.getElementById('navLinks').classList.remove('mobile-open');
+    const spans = document.querySelectorAll('#burgerBtn span');
+    spans[0].style.transform = '';
+    spans[1].style.opacity = '';
+    spans[2].style.transform = '';
+  });
+});
+
 // ─── HISTORY ──────────────────────────────────────────────────────
 const MAX_HISTORY = 10;
 
