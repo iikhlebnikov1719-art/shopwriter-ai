@@ -1506,8 +1506,13 @@ async function handleAuth() {
         msgEl.className = 'modal-msg error';
         btn.disabled = false;
         btn.textContent = 'Войти';
+      } else {
+        // Успешный вход — закрываем сами, не ждём onAuthStateChange
+        currentUser = data.user;
+        await loadProfile();
+        showUserBadge();
+        closeModal();
       }
-      // Если успех — onAuthStateChange закроет модалку
     } else {
       // Регистрация — сначала проверяем не занят ли email
       const { data, error } = await sb.auth.signUp({ email, password });
