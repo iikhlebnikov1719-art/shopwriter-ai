@@ -1076,7 +1076,7 @@
       </div>
       <div class="review-card">
         <div class="review-stars">★★★★★</div>
-        <div class="review-text">"Запустила магазин косметики на Ozon. ShopWriter помог с описаниями на русском и английском одновременно. Конверсия карточек выросла заметно."</div>
+        <div class="review-text">"Запустила магазин косметики на Ozon. ShopWriter помог быстро заполнить все карточки товаров. Конверсия выросла заметно."</div>
         <div class="review-author">
           <div class="review-avatar">МС</div>
           <div>
@@ -1105,9 +1105,9 @@
   <div class="logo">Shop<span>Writer</span> AI</div>
   <div data-i18n="footer.copy">© 2025 ShopWriter AI. Built for sellers.</div>
   <div style="display:flex;gap:24px;">
-    <a href="#" data-i18n="footer.privacy">Privacy</a>
-    <a href="#" data-i18n="footer.terms">Terms</a>
-    <a href="#" data-i18n="footer.contact">Contact</a>
+    <a href="#" onclick="openLegalModal('privacy');return false;" data-i18n="footer.privacy">Конфиденциальность</a>
+    <a href="#" onclick="openLegalModal('terms');return false;" data-i18n="footer.terms">Условия</a>
+    <a href="#" onclick="openLegalModal('contact');return false;" data-i18n="footer.contact">Контакты</a>
   </div>
 </footer>
 
@@ -1775,19 +1775,51 @@ async function generate() {
   outputContent.innerHTML = '<div class="shimmer" style="width:80%"></div><div class="shimmer" style="width:60%"></div><div class="shimmer" style="width:90%"></div><div class="shimmer" style="width:70%"></div>';
   outputArea.classList.add('visible');
 
-  const langInstruction = currentLang === 'ru' ? 'Respond entirely in Russian.'
-    : currentLang === 'en' ? 'Respond entirely in English.'
-    : 'Provide BOTH a Russian version and an English version, clearly labeled.';
+  const uiLang = siteLang; // язык интерфейса сайта
 
-  const prompt = `You are an expert e-commerce copywriter specializing in marketplace product listings.
-Generate a complete product listing package for:
-Product name: ${name}
-Category: ${category}
-Tone/Style: ${tone}
-Key features: ${features || 'not specified'}
-Target platforms: ${platforms}
+  const sectionLabels = uiLang === 'ru'
+    ? { title: 'ЗАГОЛОВОК', desc: 'ОПИСАНИЕ', bullets: 'ПРЕИМУЩЕСТВА', seo: 'SEO-КЛЮЧИ' }
+    : { title: 'TITLE', desc: 'DESCRIPTION', bullets: 'BULLET POINTS', seo: 'SEO KEYWORDS' };
+
+  const langInstruction = currentLang === 'ru'
+    ? 'Весь текст карточки товара пиши ТОЛЬКО на русском языке.'
+    : currentLang === 'en'
+    ? 'Write the entire product listing ONLY in English.'
+    : uiLang === 'ru'
+    ? 'Сначала напиши РУССКУЮ версию, затем АНГЛИЙСКУЮ версию.'
+    : 'First write the RUSSIAN version, then the ENGLISH version.';
+
+  const noCommentary = uiLang === 'ru'
+    ? 'Не добавляй никаких комментариев, пояснений или предисловий — только сам текст карточки.'
+    : 'Do not add any comments, explanations or preamble — only the listing content itself.';
+
+  const prompt = uiLang === 'ru'
+    ? `Ты профессиональный копирайтер для маркетплейсов. Составь карточку товара.
+Товар: ${name}
+Категория: ${category}
+Тон/Стиль: ${tone}
+Характеристики: ${features || 'не указаны'}
+Маркетплейс: ${platforms}
 ${langInstruction}
-Format with sections: 1. TITLE 2. DESCRIPTION 3. BULLET POINTS (✓) 4. SEO KEYWORDS`;
+${noCommentary}
+Структура ответа:
+1. ${sectionLabels.title}
+2. ${sectionLabels.desc}
+3. ${sectionLabels.bullets} (каждый пункт начинай с ✓)
+4. ${sectionLabels.seo}`
+    : `You are a professional e-commerce copywriter. Generate a product listing.
+Product: ${name}
+Category: ${category}
+Tone: ${tone}
+Features: ${features || 'not specified'}
+Platform: ${platforms}
+${langInstruction}
+${noCommentary}
+Format:
+1. ${sectionLabels.title}
+2. ${sectionLabels.desc}
+3. ${sectionLabels.bullets} (each starting with ✓)
+4. ${sectionLabels.seo}`;
 
   try {
     const langs = currentLang === 'both' ? ['ru', 'en'] : [currentLang];
@@ -1901,6 +1933,85 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
 // Язык по умолчанию — русский
 setSiteLang('ru', null);
+</script>
+<!-- LEGAL MODALS -->
+<div id="legalModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;overflow-y:auto;padding:40px 20px;" onclick="if(event.target===this)closeLegalModal()">
+  <div style="max-width:600px;margin:0 auto;background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:36px 32px;position:relative;">
+    <button onclick="closeLegalModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;">×</button>
+    <h2 id="legalTitle" style="font-family:'Inter',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:20px;color:var(--cream);"></h2>
+    <div id="legalBody" style="font-size:.9rem;line-height:1.8;color:rgba(245,240,232,0.75);"></div>
+  </div>
+</div>
+
+<script>
+const legalContent = {
+  privacy: {
+    title: 'Политика конфиденциальности',
+    body: `
+      <p style="margin-bottom:14px"><strong style="color:var(--cream)">Последнее обновление: март 2025</strong></p>
+      <p style="margin-bottom:14px">ShopWriter AI («мы», «сервис») уважает вашу конфиденциальность. Настоящая политика описывает, какие данные мы собираем и как их используем.</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--amber)">Что мы собираем</strong></p>
+      <p style="margin-bottom:14px">При регистрации мы сохраняем ваш email-адрес. При использовании сервиса мы сохраняем количество выполненных генераций для управления лимитами вашего тарифа.</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--amber)">Как мы используем данные</strong></p>
+      <p style="margin-bottom:14px">Данные используются исключительно для работы сервиса: авторизации, учёта генераций и отправки уведомлений. Мы не продаём и не передаём ваши данные третьим лицам.</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--amber)">Cookies</strong></p>
+      <p style="margin-bottom:14px">Мы используем cookies для поддержания сессии авторизации. Вы можете отключить cookies в настройках браузера, однако это может повлиять на работу сервиса.</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--amber)">Контакт</strong></p>
+      <p>По вопросам конфиденциальности: <a href="mailto:support@shopwriter.ru" style="color:var(--amber)">support@shopwriter.ru</a></p>
+    `
+  },
+  terms: {
+    title: 'Условия использования',
+    body: `
+      <p style="margin-bottom:14px"><strong style="color:var(--cream)">Последнее обновление: март 2025</strong></p>
+      <p style="margin-bottom:14px">Используя ShopWriter AI, вы соглашаетесь с настоящими условиями. Пожалуйста, прочитайте их внимательно.</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--amber)">Использование сервиса</strong></p>
+      <p style="margin-bottom:14px">ShopWriter AI предназначен для генерации текстов карточек товаров в личных и коммерческих целях. Вы несёте ответственность за содержание данных, которые вводите в сервис.</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--amber)">Ограничения</strong></p>
+      <p style="margin-bottom:14px">Запрещается использовать сервис для создания незаконного, вводящего в заблуждение или вредоносного контента. Запрещается перепродажа доступа к сервису третьим лицам.</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--amber)">Тарифы и оплата</strong></p>
+      <p style="margin-bottom:14px">Бесплатный тариф предоставляется без ограничений по сроку. Платные тарифы оплачиваются ежемесячно. Возврат средств возможен в течение 3 дней с момента оплаты.</p>
+      <p style="margin-bottom:10px"><strong style="color:var(--amber)">Ограничение ответственности</strong></p>
+      <p>Мы не гарантируем конкретных результатов продаж от использования сгенерированных текстов. Сервис предоставляется «как есть».</p>
+    `
+  },
+  contact: {
+    title: 'Контакты',
+    body: `
+      <p style="margin-bottom:20px">Мы всегда рады помочь. Свяжитесь с нами удобным способом:</p>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="background:var(--surface3);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:14px;">
+          <span style="font-size:1.4rem">📧</span>
+          <div>
+            <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:3px">EMAIL</div>
+            <a href="mailto:supportshopwriter@gmail.com" style="color:var(--amber);font-weight:500;">supportshopwriter@gmail.com</a>
+          </div>
+        </div>
+        <div style="background:var(--surface3);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:14px;">
+          <span style="font-size:1.4rem">🌐</span>
+          <div>
+            <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:3px">САЙТ</div>
+            <a href="https://shopwriter.ru" style="color:var(--amber);font-weight:500;">shopwriter.ru</a>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:20px;font-size:.82rem;color:var(--text-muted)">Время ответа: в течение 24 часов в рабочие дни.</p>
+    `
+  }
+};
+
+function openLegalModal(type) {
+  const content = legalContent[type];
+  document.getElementById('legalTitle').textContent = content.title;
+  document.getElementById('legalBody').innerHTML = content.body;
+  document.getElementById('legalModal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLegalModal() {
+  document.getElementById('legalModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
 </script>
 </body>
 </html>
