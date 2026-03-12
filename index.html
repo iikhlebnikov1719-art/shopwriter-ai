@@ -660,6 +660,8 @@
       <span class="u-email" id="userEmail"></span>
       <span style="color:var(--text-muted);font-size:.75rem;">👤</span>
     </div>
+    <!-- shown when logged out -->
+    <button id="navLoginBtn" onclick="openModal(event)" style="display:none;background:transparent;border:1px solid var(--border);color:var(--cream);padding:7px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--cream)'">Войти</button>
     <div class="site-lang-switcher">
       <button class="site-lang-btn active" onclick="setSiteLang('en',this)">EN</button>
       <button class="site-lang-btn" onclick="setSiteLang('ru',this)">RU</button>
@@ -1139,10 +1141,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
     currentUser = session.user;
     await loadProfile();
     showUserBadge();
+    closeModal();
   } else {
     currentUser = null;
     userProfile = null;
     hideUserBadge();
+    // Показываем кнопку Войти для гостей
+    document.getElementById('navLoginBtn').style.display = 'block';
   }
 });
 
@@ -1213,13 +1218,18 @@ document.getElementById('dashboardModal').addEventListener('click', function(e) 
 function showUserBadge() {
   document.getElementById('userBadge').style.display = 'flex';
   document.getElementById('navAuthBtn').style.display = 'none';
+  document.getElementById('navLoginBtn').style.display = 'none';
   document.getElementById('userEmail').textContent = currentUser.email;
   document.getElementById('userPlan').textContent = (userProfile?.plan || 'free').toUpperCase();
+  // Убираем плашку регистрации если пользователь вошёл
+  const nudge = document.getElementById('guestNudge');
+  if (nudge) nudge.remove();
 }
 
 function hideUserBadge() {
   document.getElementById('userBadge').style.display = 'none';
   document.getElementById('navAuthBtn').style.display = 'block';
+  document.getElementById('navLoginBtn').style.display = 'block';
   document.getElementById('genCounter').classList.remove('visible');
 }
 
