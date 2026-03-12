@@ -1010,7 +1010,31 @@
 </footer>
 
 <script>
-// ─── ANIMATED COUNTERS ────────────────────────────────────────────
+// ─── DEVICE FINGERPRINT ───────────────────────────────────────────
+function getDeviceId() {
+  let id = localStorage.getItem('sw_device_id');
+  if (!id) {
+    const nav = window.navigator;
+    const scr = window.screen;
+    const raw = [
+      nav.language, nav.platform,
+      nav.hardwareConcurrency,
+      scr.colorDepth,
+      scr.width + 'x' + scr.height,
+      new Date().getTimezoneOffset(),
+      nav.userAgent.slice(0, 80)
+    ].join('|');
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+      hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+      hash |= 0;
+    }
+    id = Math.abs(hash).toString(36) + '-' + Math.random().toString(36).slice(2,9) + '-' + Date.now().toString(36);
+    localStorage.setItem('sw_device_id', id);
+  }
+  return id;
+}
+const DEVICE_ID = getDeviceId();
 function animateCounter(el, target, suffix='', prefix='') {
   let start = 0;
   const duration = 2000;
@@ -1394,19 +1418,40 @@ async function generate() {
   const name = document.getElementById('productName').value.trim();
   if (!name) { document.getElementById('productName').focus(); return; }
 
-  // ── GUEST LIMIT: 1 generation without account ──
+  // ── DEVICE FINGERPRINT LIMIT ──────────────────────────────────────
+  // Проверяем лимит устройства НЕЗАВИСИМО от аккаунта
+  const deviceUsed = parseInt(localStorage.getItem('sw_device_used') || '0');
+
   if (!currentUser) {
-    const guestUsed = parseInt(localStorage.getItem('sw_guest_used') || '0');
-    if (guestUsed >= 1) {
-      // Show register prompt
+    // Гость: 1 генерация на устройство
+    if (deviceUsed >= 1) {
       document.getElementById('authModal').classList.add('open');
       document.getElementById('modalTitle').textContent = '🎉 Понравилось?';
       document.getElementById('modalSub').textContent = 'Зарегистрируйтесь бесплатно — получите 20 генераций в месяц!';
       return;
     }
+  } else if (userProfile && userProfile.plan !== 'pro') {
+    // Зарегистрированный FREE пользователь:
+    // Проверяем лимит по device_id в Supabase
+    const { data: deviceData } = await sb
+      .from('device_limits')
+      .select('generations_used')
+      .eq('device_id', DEVICE_ID)
+      .single();
+
+    const deviceTotal = deviceData?.generations_used || 0;
+
+    // Если устройство уже использовало больше чем FREE_LIMIT — блокируем
+    if (deviceTotal >= FREE_LIMIT && userProfile.generations_used >= FREE_LIMIT) {
+      const msg = siteLang === 'ru'
+        ? '⚠️ Лимит устройства исчерпан. Перейдите на Pro!'
+        : '⚠️ Device limit reached. Upgrade to Pro!';
+      alert(msg);
+      return;
+    }
   }
 
-  // Check limit for logged-in users
+  // Check limit for logged-in users (обычная проверка аккаунта)
   if (currentUser && userProfile) {
     const limit = userProfile.plan === 'pro' ? 500 : FREE_LIMIT;
     if ((userProfile.generations_used || 0) >= limit) {
@@ -1470,31 +1515,41 @@ Format with sections: 1. TITLE 2. DESCRIPTION 3. BULLET POINTS (✓) 4. SEO KEYW
 
     renderOutputTabs();
 
-    // Increment counter
+    // ── INCREMENT COUNTERS ────────────────────────────────────────
+    // Всегда увеличиваем счётчик устройства
+    const newDeviceUsed = (parseInt(localStorage.getItem('sw_device_used') || '0')) + 1;
+    localStorage.setItem('sw_device_used', newDeviceUsed);
+
     if (currentUser && userProfile) {
+      // Обновляем счётчик аккаунта
       const newCount = (userProfile.generations_used || 0) + 1;
-      await sb.from('profiles').update({ generations_used: newCount }).eq('id', currentUser.id);
+      await sb.from('profiles').update({
+        generations_used: newCount,
+        device_id: DEVICE_ID
+      }).eq('id', currentUser.id);
       userProfile.generations_used = newCount;
+
+      // Обновляем счётчик устройства в Supabase (upsert)
+      await sb.from('device_limits').upsert({
+        device_id: DEVICE_ID,
+        generations_used: newDeviceUsed
+      }, { onConflict: 'device_id' });
+
       updateCounter();
     } else {
-      // Guest — increment local counter
-      const guestUsed = parseInt(localStorage.getItem('sw_guest_used') || '0');
-      localStorage.setItem('sw_guest_used', guestUsed + 1);
-      // Show signup nudge under result
+      // Гость — показываем nudge после первой генерации
       setTimeout(() => {
         const shareRow = document.getElementById('shareRow');
-        if (shareRow && !currentUser) {
+        if (shareRow && !currentUser && !document.getElementById('guestNudge')) {
           const nudge = document.createElement('div');
           nudge.id = 'guestNudge';
-          nudge.style.cssText = 'margin-top:16px;padding:16px;background:linear-gradient(135deg,rgba(232,160,32,0.12),rgba(232,160,32,0.05));border:1px solid rgba(232,160,32,0.3);border-radius:12px;text-align:center;';
+          nudge.style.cssText = 'margin-top:16px;padding:20px;background:linear-gradient(135deg,rgba(232,160,32,0.12),rgba(232,160,32,0.05));border:1px solid rgba(232,160,32,0.3);border-radius:12px;text-align:center;';
           nudge.innerHTML = `
-            <div style="font-family:Syne,sans-serif;font-weight:700;margin-bottom:6px;">Это была ваша бесплатная генерация ✨</div>
-            <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:12px;">Зарегистрируйтесь бесплатно и получите <strong style="color:var(--amber)">20 генераций в месяц</strong></div>
-            <button onclick="openModal(event)" style="background:var(--amber);color:var(--ink);border:none;padding:10px 28px;border-radius:8px;font-family:Syne,sans-serif;font-weight:700;cursor:pointer;font-size:.95rem;">Зарегистрироваться бесплатно →</button>
+            <div style="font-family:Syne,sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:6px;">Это была ваша бесплатная генерация ✨</div>
+            <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:14px;">Зарегистрируйтесь бесплатно — <strong style="color:var(--amber)">20 генераций в месяц</strong></div>
+            <button onclick="openModal(event)" style="background:var(--amber);color:var(--ink);border:none;padding:12px 32px;border-radius:8px;font-family:Syne,sans-serif;font-weight:700;cursor:pointer;font-size:.95rem;">Зарегистрироваться бесплатно →</button>
           `;
-          if (!document.getElementById('guestNudge')) {
-            shareRow.parentNode.insertBefore(nudge, shareRow.nextSibling);
-          }
+          shareRow.parentNode.insertBefore(nudge, shareRow.nextSibling);
         }
       }, 300);
     }
