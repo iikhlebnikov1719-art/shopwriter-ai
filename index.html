@@ -1041,7 +1041,7 @@ Format with sections: 1. TITLE 2. DESCRIPTION 3. BULLET POINTS (✓) 4. SEO KEYW
 
     for (const lang of langs) {
       const lp = lang === 'ru' ? prompt.replace(langInstruction,'Respond entirely in Russian.') : prompt.replace(langInstruction,'Respond entirely in English.');
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
