@@ -640,6 +640,82 @@
 
   /* ANIMATED STATS */
   .stat-num { font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; color:var(--amber); }
+
+  /* HISTORY PANEL */
+  .history-panel {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:14px; padding:20px; margin-top:16px;
+  }
+  .history-title {
+    font-family:'Syne',sans-serif; font-weight:700; font-size:.8rem;
+    letter-spacing:.1em; color:var(--text-muted); text-transform:uppercase;
+    margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .history-clear { background:none; border:none; color:var(--text-muted); font-size:.75rem; cursor:pointer; transition:color .2s; }
+  .history-clear:hover { color:#ff6b6b; }
+  .history-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px; border-radius:8px; cursor:pointer;
+    border:1px solid transparent; margin-bottom:6px; transition:all .2s;
+    background:var(--surface3);
+  }
+  .history-item:hover { border-color:var(--border); }
+  .history-item-name { font-size:.88rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; }
+  .history-item-meta { font-size:.75rem; color:var(--text-muted); white-space:nowrap; }
+  .history-empty { font-size:.85rem; color:var(--text-muted); text-align:center; padding:20px; }
+
+  /* FORGOT PASSWORD */
+  .modal-forgot { font-size:.82rem; color:var(--text-muted); text-align:right; margin-top:-8px; margin-bottom:12px; }
+  .modal-forgot a { color:var(--amber); text-decoration:none; }
+  .modal-forgot a:hover { text-decoration:underline; }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    nav { padding:14px 20px; }
+    nav ul#navLinks { display:none; }
+    .logo { font-size:1.1rem; }
+    .hero { padding:100px 24px 60px; }
+    .hero h1 { font-size:clamp(2rem, 8vw, 3.5rem); }
+    .hero-stats { flex-direction:column; gap:16px; align-items:flex-start; }
+    .hero-actions { flex-direction:column; gap:10px; }
+    .btn-primary, .btn-secondary { width:100%; text-align:center; }
+    .tool-section { padding:60px 20px; }
+    .tool-card { padding:0; }
+    .tool-body { padding:20px; gap:20px; }
+    .form-grid { grid-template-columns:1fr; }
+    .form-group.full { grid-column:1; }
+    .features-section { padding:60px 20px; }
+    .features-grid { grid-template-columns:1fr; gap:14px; }
+    .pricing-section { padding:60px 20px; }
+    .pricing-grid { grid-template-columns:1fr; gap:16px; }
+    .reviews-section { padding:60px 20px; }
+    .reviews-grid { grid-template-columns:1fr; }
+    .modal { padding:28px 20px; margin:16px; max-width:calc(100vw - 32px); }
+    .dashboard-modal { margin:16px; max-width:calc(100vw - 32px); }
+    .dash-stats-row { grid-template-columns:repeat(3,1fr); gap:8px; }
+    .dash-stat-num { font-size:1.2rem; }
+    .dash-stat-label { font-size:.65rem; }
+    .dash-header { padding:20px; }
+    .dash-body { padding:20px; }
+    footer { flex-direction:column; gap:12px; text-align:center; padding:30px 20px; }
+    .share-row { flex-direction:column; }
+    .share-btn { width:100%; justify-content:center; }
+    #navLoginBtn { padding:6px 10px; font-size:.78rem; }
+    .user-badge { padding:5px 10px; }
+    .user-badge .u-email { max-width:80px; }
+    .platforms { gap:6px; }
+    .platform-chip { padding:6px 10px; font-size:.78rem; }
+    .lang-toggle { flex-wrap:wrap; }
+    .hero-badge { font-size:.75rem; }
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { font-size:1.9rem; }
+    .dash-stats-row { grid-template-columns:1fr 1fr; }
+    .dash-actions { flex-direction:column; }
+    .dash-btn { min-width:unset; }
+    .site-lang-switcher { display:none; }
+  }
 </style>
 </head>
 <body>
@@ -686,6 +762,9 @@
     <div class="modal-field">
       <label>ПАРОЛЬ</label>
       <input type="password" id="authPassword" placeholder="••••••••" />
+    </div>
+    <div class="modal-forgot" id="forgotLink">
+      <a href="#" onclick="showForgotPassword(event)">Забыли пароль?</a>
     </div>
     <button class="modal-submit" id="authSubmit" onclick="handleAuth()">Войти</button>
     <div class="modal-msg" id="authMsg"></div>
@@ -866,6 +945,15 @@
         </div>
       </div>
 
+      <!-- HISTORY -->
+      <div class="history-panel" id="historyPanel" style="display:none;">
+        <div class="history-title">
+          <span>📋 История генераций</span>
+          <button class="history-clear" onclick="clearHistory()">Очистить</button>
+        </div>
+        <div id="historyList"><div class="history-empty">История пуста</div></div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -1012,6 +1100,137 @@
 </footer>
 
 <script>
+// ─── HISTORY ──────────────────────────────────────────────────────
+const MAX_HISTORY = 10;
+
+function loadHistory() {
+  return JSON.parse(localStorage.getItem('sw_history') || '[]');
+}
+
+function saveToHistory(name, lang, content) {
+  const history = loadHistory();
+  const entry = {
+    id: Date.now(),
+    name,
+    lang,
+    content,
+    date: new Date().toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+  };
+  history.unshift(entry);
+  if (history.length > MAX_HISTORY) history.pop();
+  localStorage.setItem('sw_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  const panel = document.getElementById('historyPanel');
+  const list = document.getElementById('historyList');
+  if (!history.length) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  list.innerHTML = history.map(e => `
+    <div class="history-item" onclick="loadFromHistory(${e.id})">
+      <span class="history-item-name">✦ ${e.name}</span>
+      <span class="history-item-meta">${e.lang.toUpperCase()} · ${e.date}</span>
+    </div>
+  `).join('');
+}
+
+function loadFromHistory(id) {
+  const entry = loadHistory().find(e => e.id === id);
+  if (!entry) return;
+  outputs = entry.content;
+  activeTab = Object.keys(entry.content)[0];
+  document.getElementById('outputArea').classList.add('visible');
+  document.getElementById('shareRow').style.display = 'flex';
+  renderOutputTabs();
+  document.getElementById('tool').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearHistory() {
+  localStorage.removeItem('sw_history');
+  renderHistory();
+}
+
+// ─── MONTHLY RESET ────────────────────────────────────────────────
+async function checkMonthlyReset() {
+  if (!currentUser || !userProfile) return;
+  const lastReset = userProfile.last_reset;
+  const now = new Date();
+  const resetDate = lastReset ? new Date(lastReset) : null;
+
+  const shouldReset = !resetDate ||
+    resetDate.getMonth() !== now.getMonth() ||
+    resetDate.getFullYear() !== now.getFullYear();
+
+  if (shouldReset && userProfile.plan !== 'pro') {
+    await sb.from('profiles').update({
+      generations_used: 0,
+      last_reset: now.toISOString()
+    }).eq('id', currentUser.id);
+    userProfile.generations_used = 0;
+    userProfile.last_reset = now.toISOString();
+    // Сбрасываем device counter тоже
+    localStorage.setItem('sw_device_used', '0');
+    updateCounter();
+  }
+}
+
+// ─── FORGOT PASSWORD ──────────────────────────────────────────────
+function showForgotPassword(e) {
+  e.preventDefault();
+  const msgEl = document.getElementById('authMsg');
+  const email = document.getElementById('authEmail').value.trim();
+
+  // Показываем поле ввода email для сброса
+  document.getElementById('authPassword').closest('.modal-field').style.display = 'none';
+  document.getElementById('forgotLink').style.display = 'none';
+  document.getElementById('authSubmit').textContent = 'Отправить письмо';
+  document.getElementById('authSubmit').onclick = sendResetEmail;
+  document.getElementById('modalTitle').textContent = 'Сброс пароля';
+  document.getElementById('modalSub').textContent = 'Введите email и мы отправим ссылку для сброса';
+  document.querySelector('.modal-tabs').style.display = 'none';
+  msgEl.textContent = '';
+}
+
+async function sendResetEmail() {
+  const email = document.getElementById('authEmail').value.trim();
+  const btn = document.getElementById('authSubmit');
+  const msgEl = document.getElementById('authMsg');
+
+  if (!email) { msgEl.textContent = 'Введите email'; msgEl.className = 'modal-msg error'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://shopwriter.ru'
+  });
+
+  if (error) {
+    msgEl.textContent = 'Ошибка. Проверьте email.';
+    msgEl.className = 'modal-msg error';
+  } else {
+    msgEl.textContent = '✓ Письмо отправлено! Проверьте почту.';
+    msgEl.className = 'modal-msg success';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Отправить письмо';
+}
+
+function resetModalState() {
+  document.getElementById('authPassword').closest('.modal-field').style.display = 'flex';
+  document.getElementById('forgotLink').style.display = 'block';
+  document.getElementById('authSubmit').textContent = 'Войти';
+  document.getElementById('authSubmit').onclick = handleAuth;
+  document.getElementById('modalTitle').textContent = 'Добро пожаловать';
+  document.getElementById('modalSub').textContent = 'Войдите чтобы отслеживать генерации';
+  document.querySelector('.modal-tabs').style.display = 'flex';
+}
+
 // ─── DEVICE FINGERPRINT ───────────────────────────────────────────
 function getDeviceId() {
   let id = localStorage.getItem('sw_device_id');
@@ -1154,7 +1373,9 @@ sb.auth.onAuthStateChange(async (event, session) => {
 async function loadProfile() {
   const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
   userProfile = data;
+  await checkMonthlyReset();
   updateCounter();
+  renderHistory();
 }
 
 function updateCounter() {
@@ -1247,6 +1468,7 @@ function openModal(e) {
 function closeModal() {
   document.getElementById('authModal').classList.remove('open');
   document.getElementById('authMsg').textContent = '';
+  resetModalState();
 }
 document.getElementById('authModal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
@@ -1320,7 +1542,8 @@ async function handleAuth() {
   }
 }
 
-// Enter key in modal
+// Init on load
+renderHistory();
 ['authEmail','authPassword'].forEach(id => {
   document.getElementById(id).addEventListener('keydown', e => { if(e.key==='Enter') handleAuth(); });
 });
@@ -1540,6 +1763,7 @@ Format with sections: 1. TITLE 2. DESCRIPTION 3. BULLET POINTS (✓) 4. SEO KEYW
     }
 
     renderOutputTabs();
+    saveToHistory(name, currentLang, outputs);
 
     // ── INCREMENT COUNTERS ────────────────────────────────────────
     // Всегда увеличиваем счётчик устройства
