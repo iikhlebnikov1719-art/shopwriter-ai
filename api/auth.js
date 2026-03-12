@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       body = { email, password };
     } else if (action === 'reset') {
       endpoint = `${SUPABASE_URL}/auth/v1/recover`;
-      body = { email };
+      body = { email, redirect_to: 'https://shopwriter.ru/reset-password.html' };
     } else if (action === 'profile') {
       // Получить профиль пользователя
       const profileRes = await fetch(
@@ -66,6 +66,21 @@ export default async function handler(req, res) {
         }
       );
       return res.status(200).json({ ok: true });
+    } else if (action === 'update_password') {
+      const updateRes = await fetch(
+        `${SUPABASE_URL}/auth/v1/user`,
+        {
+          method: 'PUT',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password: req.body.newPassword })
+        }
+      );
+      const updated = await updateRes.json();
+      return res.status(updateRes.status).json(updated);
     } else {
       return res.status(400).json({ error: 'Unknown action' });
     }
